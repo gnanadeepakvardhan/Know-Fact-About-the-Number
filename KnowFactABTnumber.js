@@ -61,48 +61,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 
-    function getMockFact(number) {
-        const mockFacts = {
-            1: "1 is the first natural number and the foundation of all counting!",
-            2: "2 is the only even prime number - how special!",
-            3: "3 is considered a lucky number in many cultures!",
-            4: "4 represents stability and balance in numerology!",
-            5: "5 is the number of fingers on one hand!",
-            7: "7 is considered a lucky number in many cultures!",
-            10: "10 is the base of our decimal number system!",
-            42: "42 is the answer to life, the universe, and everything (according to Douglas Adams)!",
-            100: "100 represents a century and is a milestone number!",
-            365: "365 is the number of days in a non-leap year!",
-            1000: "1000 is a millennium and represents great achievement!"
-        };
-
-        return mockFacts[number] || `The number ${number} is unique and special in its own way!`;
-    }
-
     async function getFactAboutNumber(number) {
         try {
             showLoader();
 
             const url = `https://apis.ccbp.in/numbers-fact?number=${number}`;
             console.log('🔍 Fetching fact for number:', number);
-            console.log('🌐 API URL:', url);
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-            const response = await fetch(url, {
-                method: 'GET',
-                mode: 'cors',
-                signal: controller,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            clearTimeout(timeoutId);
-            console.log('�� Response status:', response.status);
-            console.log('📡 Response headers:', response.headers);
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -120,48 +86,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('❌ Error fetching fact:', error);
-
-            if (error.name === 'AbortError') {
-                console.log('⏰ Request timed out, using mock fact');
-                const mockFact = getMockFact(parseInt(userInput.value));
-                displayFact(mockFact);
-                addEmojiReaction();
-            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                console.log('🌐 Network error, using mock fact');
-                const mockFact = getMockFact(parseInt(userInput.value));
-                displayFact(mockFact);
-                addEmojiReaction();
-            } else {
-                console.log('🔄 API error, using mock fact');
-                const mockFact = getMockFact(parseInt(userInput.value));
-                displayFact(mockFact);
-                addEmojiReaction();
-            }
+            showError('😅 Oops! Something went wrong. Please try again!');
         } finally {
             hideLoader();
         }
     }
 
-    function handleSearch() {
-        const number = userInput.value.trim();
-
-        if (number === '') {
-            showError('🤔 Please enter a number!');
-            return;
-        }
-
-        if (isNaN(number) || number === '') {
-            showError('😅 Please enter a valid number!');
-            return;
-        }
-
-        resetFactDisplay();
-        getFactAboutNumber(number);
-    }
-
     userInput.addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
-            handleSearch();
+            const number = userInput.value.trim();
+
+            if (number === '') {
+                showError('🤔 Please enter a number!');
+                return;
+            }
+
+            if (isNaN(number) || number === '') {
+                showError('😅 Please enter a valid number!');
+                return;
+            }
+
+            resetFactDisplay();
+            getFactAboutNumber(number);
         }
     });
 
@@ -196,10 +142,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
     });
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-        });
-    }
 });
